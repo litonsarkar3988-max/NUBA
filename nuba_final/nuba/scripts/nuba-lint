@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+# nuba-lint  —  Linter / static analyzer for Nuba (.nu) files
+# Usage:
+#   nuba-lint file.nu
+#   nuba-lint *.nu
+#   nuba-lint --strict file.nu
+
+import sys, os, argparse
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+try:
+    from nuba.lexer       import Lexer
+    from nuba.parser      import Parser
+    from nuba.typechecker import typecheck
+    from nuba.errors      import NubaError
+except ImportError as e:
+    print(f"nuba-lint: cannot import Nuba: {e}", file=sys.stderr)
+    sys.exit(127)
+
+
+RULES = {
+    'W001': 'Missing return value in non-void function',
+    'W002': 'Variable defined but never used',
+    'W003': 'Unreachable code after return',
+    'W004': 'Possible division by zero',
+    'W005': 'Empty catch block',
+    'W006': 'Magic number (consider using a named constant)',
+    'E001': 'Undefined variable',
+    'E002': 'Undefined class',
+    'E003': 'Const reassignment',
+    'E004': 'Wrong number of arguments',
+}
+
+
+def lint_file(path: str, strict: bool = False) -> list:
+    """Lint a .nu file and return list of (line, code, message)."""
+    issues = []
+
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            source = f.read()
+    except OSError as e:
+        return [(0, 'E000', str(e))]
+
+    # Phase 1: Lex + Parse
+    try:
+        tokens = Lexer(source, path).tokenize()
+        ast    = Parser(tokens, path).parse()
+    except NubaError as e:
+        msg = str(e)
+        # extract line number from "file:line:col: msg"
+        import re
+        m = re.search(r':(\d+):', msg)
+        line = int(m.group(1)) if m else 0
+        return [(line, 'E000', msg)]
+
+    # Phase 2: Type-check / static analysis
+    warnings = typecheck(ast, path)
+    for w in warnings:
+        code = 'E001' if 'undefined' in w.msg.lower() else \
+               'E003' if 'const'     in w.msg.lower() else \
+               'E004' if 'argument'  in w.msg.lower() else \
+               'W003' if 'unreachable' in w.msg.lower() else 'W001'
+        issues.append((w.line, code, w.msg))
+
+    # Phase 3: Source-level checks
+    lines = source.splitlines()
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+
+        # W005: empty catch block
+        if stripped == 'catch' or (stripped.startswith('catch') and '{}' in stripped):
+            issues.append((i, 'W005', 'Empty catch block'))
+
+        # W006: magic numbers (in strict mode)
+        if strict:
+            import re
+            # Flag bare numbers > 9 not in let/const assignments
+            if re.search(r'[^a-zA-Z0-9_"\']\b([1-9][0-9]+)\b', stripped):
+                if not re.match(r'\s*(let|const|for|#)', stripped):
+                    issues.append((i, 'W006', 'Consider using a named constant'))
+
+    return sorted(issues, key=lambda x: x[0])
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog='nuba-lint',
+        description='Lint Nuba (.nu) source files'
+    )
+    parser.add_argument('files',           nargs='+', help='Files to lint')
+    parser.add_argument('--strict', '-s',  action='store_true',
+                        help='Enable strict mode (more warnings)')
+    parser.add_argument('--no-warnings',   action='store_true',
+                        help='Show errors only, suppress warnings')
+    parser.add_argument('--format', '-f',  choices=['text','json'],
+                        default='text', help='Output format')
+    args = parser.parse_args()
+
+    total_issues = 0
+    total_errors = 0
+    all_results  = []
+
+    for path in args.files:
+        if not os.path.exists(path):
+            print(f"nuba-lint: {path}: not found", file=sys.stderr)
+            continue
+
+        issues = lint_file(path, args.strict)
+
+        if args.no_warnings:
+            issues = [i for i in issues if i[1].startswith('E')]
+
+        all_results.append((path, issues))
+        total_issues += len(issues)
+        total_errors += sum(1 for i in issues if i[1].startswith('E'))
+
+    if args.format == 'json':
+        import json
+        out = []
+        for path, issues in all_results:
+            for line, code, msg in issues:
+                out.append({'file':path,'line':line,'code':code,'message':msg,
+                            'severity':'error' if code.startswith('E') else 'warning'})
+        print(json.dumps(out, indent=2))
+    else:
+        for path, issues in all_results:
+            if not issues:
+                print(f"  ✓  {path}")
+                continue
+            for line, code, msg in issues:
+                sev   = '\033[91mE\033[0m' if code.startswith('E') else '\033[93mW\033[0m'
+                print(f"  {sev}  {path}:{line}: [{code}] {msg}")
+
+        if total_issues:
+            print(f"\n{total_issues} issue(s): {total_errors} error(s), "
+                  f"{total_issues-total_errors} warning(s)")
+        else:
+            print("\n✓ No issues found")
+
+    sys.exit(1 if total_errors else 0)
+
+
+if __name__ == '__main__':
+    main()

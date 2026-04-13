@@ -1,0 +1,27 @@
+Package: nuba-lang
+Version: 1.0.0
+Section: devel
+Priority: optional
+Architecture: all
+Depends: python3 (>= 3.8)
+Maintainer: Nuba Language Project <hello@nuba-lang.org>
+Homepage: https://nuba-lang.org
+Description: Nuba Programming Language
+ Nuba is a clean, expressive, dynamically-typed programming language
+ that runs .nu files just like Python runs .py files.
+ .
+ Features:
+  - Variables (let/const), all data types
+  - Functions, lambdas, closures
+  - Classes with single inheritance
+  - Pattern matching (match/case)
+  - Error handling (try/catch/finally)
+  - 70+ built-in functions
+  - Standard library
+  - Interactive REPL
+ .
+ After installation, run .nu files with:
+   nuba myfile.nu
+ .
+ Or start the interactive REPL:
+   nuba

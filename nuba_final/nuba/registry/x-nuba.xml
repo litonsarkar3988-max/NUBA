@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+
+  <!--
+    Nuba Programming Language — MIME type definition
+    File: x-nuba.xml
+    Install: xdg-mime install x-nuba.xml
+             update-mime-database ~/.local/share/mime
+  -->
+
+  <mime-type type="text/x-nuba">
+    <comment>Nuba source file</comment>
+    <comment xml:lang="bn">নুবা সোর্স ফাইল</comment>
+    <comment xml:lang="de">Nuba-Quelltextdatei</comment>
+    <comment xml:lang="es">Archivo fuente Nuba</comment>
+    <comment xml:lang="fr">Fichier source Nuba</comment>
+    <comment xml:lang="ja">Nubaソースファイル</comment>
+    <comment xml:lang="ko">Nuba 소스 파일</comment>
+    <comment xml:lang="zh">Nuba源文件</comment>
+
+    <!-- File extension -->
+    <glob pattern="*.nu"/>
+    <glob pattern="*.nuba"/>
+
+    <!-- Magic bytes: Nuba files can start with shebang or # comment -->
+    <magic priority="60">
+      <match type="string" offset="0" value="#!/usr/bin/env nuba"/>
+    </magic>
+    <magic priority="50">
+      <match type="string" offset="0" value="#!/usr/bin/nuba"/>
+    </magic>
+    <magic priority="40">
+      <match type="string" offset="0" value="# Nuba"/>
+    </magic>
+
+    <!-- Inherits from plain text / source code -->
+    <sub-class-of type="text/plain"/>
+
+    <!-- Icon -->
+    <icon name="text-x-script"/>
+    <generic-icon name="text-x-generic"/>
+
+    <!-- Aliases -->
+    <alias type="application/x-nuba"/>
+  </mime-type>
+
+</mime-info>

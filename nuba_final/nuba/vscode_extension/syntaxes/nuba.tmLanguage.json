@@ -1,0 +1,142 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Nuba",
+  "scopeName": "source.nuba",
+  "fileTypes": ["nu", "nuba"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#builtins" },
+    { "include": "#constants" },
+    { "include": "#numbers" },
+    { "include": "#operators" },
+    { "include": "#function-def" },
+    { "include": "#class-def" },
+    { "include": "#identifiers" }
+  ],
+  "repository": {
+    "comments": {
+      "name": "comment.line.number-sign.nuba",
+      "match": "#.*$"
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.nuba",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.nuba",
+              "match": "\\\\[ntrb\"'\\\\0]"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.nuba",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.nuba",
+              "match": "\\\\[ntrb\"'\\\\0]"
+            }
+          ]
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.nuba",
+          "match": "\\b(if|elif|else|while|for|in|break|continue|return|match|case)\\b"
+        },
+        {
+          "name": "keyword.declaration.nuba",
+          "match": "\\b(let|const|fun|class|import|from|as|new|self|super)\\b"
+        },
+        {
+          "name": "keyword.operator.logical.nuba",
+          "match": "\\b(and|or|not|is)\\b"
+        },
+        {
+          "name": "keyword.other.nuba",
+          "match": "\\b(try|catch|finally|throw|print)\\b"
+        }
+      ]
+    },
+    "builtins": {
+      "name": "support.function.builtin.nuba",
+      "match": "\\b(len|type|int|float|str|bool|input|range|list|abs|max|min|sum|sorted|reversed|map|filter|reduce|zip|enumerate|keys|values|items|has|push|pop|insert|remove|join|split|trim|upper|lower|replace|contains|substr|indexOf|format|sqrt|floor|ceil|round|pow|log|sin|cos|tan|random|randint|choice|shuffle|time|sleep|exit|assert|readFile|writeFile|jsonParse|jsonStringify|startswith|endswith|isNull|isInt|isFloat|isString|isList|isDict|isBool)\\b"
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.nuba",
+          "match": "\\b(true|false|null)\\b"
+        },
+        {
+          "name": "constant.language.math.nuba",
+          "match": "\\b(PI|E|INF)\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.nuba",
+          "match": "\\b[0-9]+\\.[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.nuba",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arithmetic.nuba",
+          "match": "\\*\\*|[+\\-*/%]"
+        },
+        {
+          "name": "keyword.operator.comparison.nuba",
+          "match": "==|!=|<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.assignment.nuba",
+          "match": "\\+=|-=|\\*=|/=|="
+        },
+        {
+          "name": "keyword.operator.range.nuba",
+          "match": "\\.\\."
+        },
+        {
+          "name": "keyword.operator.arrow.nuba",
+          "match": "->"
+        }
+      ]
+    },
+    "function-def": {
+      "patterns": [
+        {
+          "name": "entity.name.function.nuba",
+          "match": "(?<=fun\\s)([a-zA-Z_][a-zA-Z0-9_]*)"
+        },
+        {
+          "name": "entity.name.function.nuba",
+          "match": "([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\\()"
+        }
+      ]
+    },
+    "class-def": {
+      "name": "entity.name.type.class.nuba",
+      "match": "(?<=class\\s)([A-Z][a-zA-Z0-9_]*)"
+    },
+    "identifiers": {
+      "name": "variable.other.nuba",
+      "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+    }
+  }
+}

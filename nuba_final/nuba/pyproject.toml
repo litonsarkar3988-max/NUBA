@@ -1,0 +1,38 @@
+[build-system]
+requires      = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name        = "nuba-lang"
+version     = "1.0.0"
+description = "Nuba Programming Language — run .nu files like Python"
+readme      = "README.md"
+license     = { text = "MIT" }
+requires-python = ">=3.8"
+keywords    = ["programming", "language", "interpreter", "nuba", "scripting"]
+authors     = [{ name = "Nuba Language Project", email = "hello@nuba-lang.org" }]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Interpreters",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+]
+
+[project.urls]
+Homepage      = "https://nuba-lang.org"
+Documentation = "https://docs.nuba-lang.org"
+Repository    = "https://github.com/nuba-lang/nuba"
+"Bug Tracker" = "https://github.com/nuba-lang/nuba/issues"
+
+[project.scripts]
+nuba = "nuba_cli:main"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*", "examples*", "docs*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.nu"]

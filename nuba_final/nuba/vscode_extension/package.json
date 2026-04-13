@@ -1,0 +1,162 @@
+{
+  "name": "nuba-language",
+  "displayName": "Nuba Language",
+  "description": "Nuba (.nu) language support: syntax highlighting, snippets, run commands",
+  "version": "1.0.0",
+  "publisher": "nuba-lang",
+  "icon": "images/nuba-icon.png",
+  "license": "MIT",
+  "homepage": "https://nuba-lang.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nuba-lang/vscode-nuba"
+  },
+  "bugs": {
+    "url": "https://github.com/nuba-lang/vscode-nuba/issues"
+  },
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Debuggers"
+  ],
+  "keywords": [
+    "nuba", "nu", "scripting", "interpreter"
+  ],
+  "activationEvents": [
+    "onLanguage:nuba",
+    "onCommand:nuba.runFile",
+    "onCommand:nuba.runREPL",
+    "onCommand:nuba.checkSyntax"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "nuba",
+        "aliases": ["Nuba", "nuba"],
+        "extensions": [".nu", ".nuba"],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./images/nuba-file-light.png",
+          "dark":  "./images/nuba-file-dark.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "nuba",
+        "scopeName": "source.nuba",
+        "path": "./syntaxes/nuba.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "nuba",
+        "path": "./snippets/nuba.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "nuba.runFile",
+        "title": "Nuba: Run File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "nuba.runREPL",
+        "title": "Nuba: Open REPL",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "nuba.checkSyntax",
+        "title": "Nuba: Check Syntax",
+        "icon": "$(check)"
+      },
+      {
+        "command": "nuba.showAST",
+        "title": "Nuba: Show AST"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "nuba.runFile",
+          "when": "resourceExtname == .nu",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "nuba.runFile",
+          "when": "resourceExtname == .nu",
+          "group": "nuba"
+        },
+        {
+          "command": "nuba.checkSyntax",
+          "when": "resourceExtname == .nu",
+          "group": "nuba"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "nuba.runFile",
+          "when": "resourceExtname == .nu",
+          "group": "nuba"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "nuba.runFile",
+        "key": "ctrl+f5",
+        "mac": "cmd+f5",
+        "when": "resourceExtname == .nu && editorFocus"
+      },
+      {
+        "command": "nuba.checkSyntax",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "resourceExtname == .nu && editorFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Nuba",
+      "properties": {
+        "nuba.executablePath": {
+          "type": "string",
+          "default": "nuba",
+          "description": "Path to the nuba executable"
+        },
+        "nuba.showOutputOnRun": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically show output panel when running"
+        },
+        "nuba.clearOutputOnRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Clear output panel before each run"
+        }
+      }
+    },
+    "themes": [
+      {
+        "label": "Nuba Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/nuba-dark.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.60.0",
+    "@types/node": "^14.0.0",
+    "typescript": "^4.3.0"
+  }
+}

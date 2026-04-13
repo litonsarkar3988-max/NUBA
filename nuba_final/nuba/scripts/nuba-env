@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+# nuba-env  —  Create isolated Nuba environments (like Python's venv)
+# Usage:
+#   nuba-env create myenv      # create environment
+#   nuba-env activate myenv    # print activation command
+#   nuba-env list              # list environments
+#   nuba-env remove myenv      # delete environment
+
+set -euo pipefail
+
+NUBA_ENVS_DIR="${NUBA_ENVS:-$HOME/.nuba/envs}"
+NUBA_CMD="${NUBA:-nuba}"
+
+cmd="${1:-help}"
+envname="${2:-}"
+
+# ── Colors ────────────────────────────────────────────────────────────────
+info()    { echo "  [nuba-env] $*"; }
+success() { echo "  [nuba-env] ✓ $*"; }
+error()   { echo "  [nuba-env] ✗ $*" >&2; exit 1; }
+
+case "$cmd" in
+
+# ── Create ────────────────────────────────────────────────────────────────
+create)
+    [[ -z "$envname" ]] && error "Usage: nuba-env create <name>"
+    ENV_PATH="$NUBA_ENVS_DIR/$envname"
+    [[ -d "$ENV_PATH" ]] && error "Environment '$envname' already exists"
+    
+    info "Creating environment: $envname"
+    mkdir -p "$ENV_PATH"/{lib,stdlib,bin,scripts}
+    
+    # Find Nuba installation
+    NUBA_LIB=$(python3 -c "import nuba, os; print(os.path.dirname(nuba.__file__))" 2>/dev/null || echo "")
+    if [[ -n "$NUBA_LIB" ]]; then
+        cp -r "$NUBA_LIB/../stdlib" "$ENV_PATH/" 2>/dev/null || true
+    fi
+    
+    # Create env-local nuba wrapper
+    cat > "$ENV_PATH/bin/nuba" << WRAPPER
+#!/bin/bash
+export NUBA_ENV="$ENV_PATH"
+export NUBA_PATH="$ENV_PATH/lib:$ENV_PATH/stdlib:\${NUBA_PATH:-}"
+exec $NUBA_CMD "\$@"
+WRAPPER
+    chmod +x "$ENV_PATH/bin/nuba"
+    
+    # Create activation script
+    cat > "$ENV_PATH/activate" << ACTIVATE
+# nuba-env activate
+# Usage: source $ENV_PATH/activate
+
+export NUBA_ENV="$ENV_PATH"
+export NUBA_ENV_NAME="$envname"
+export NUBA_PATH="$ENV_PATH/lib:$ENV_PATH/stdlib:\${NUBA_PATH:-}"
+export PATH="$ENV_PATH/bin:\$PATH"
+
+# Deactivate function
+deactivate_nuba() {
+    export PATH="\${_OLD_NUBA_PATH:-\$PATH}"
+    unset NUBA_ENV NUBA_ENV_NAME
+    unset -f deactivate_nuba
+}
+export _OLD_NUBA_PATH="\$PATH"
+
+echo "Nuba environment '$envname' activated"
+echo "  NUBA_ENV:  $ENV_PATH"
+echo "  NUBA_PATH: $ENV_PATH/lib:$ENV_PATH/stdlib"
+echo "  Run 'deactivate_nuba' to exit"
+ACTIVATE
+
+    # Create env metadata
+    cat > "$ENV_PATH/.nuba-env" << META
+name=$envname
+created=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+nuba_version=$(nuba --version 2>/dev/null || echo "unknown")
+META
+
+    success "Environment '$envname' created at $ENV_PATH"
+    echo ""
+    echo "  To activate:  source $ENV_PATH/activate"
+    echo "  Or run:       nuba-env activate $envname"
+    ;;
+
+# ── Activate (prints command to eval) ────────────────────────────────────
+activate)
+    [[ -z "$envname" ]] && error "Usage: nuba-env activate <name>"
+    ENV_PATH="$NUBA_ENVS_DIR/$envname"
+    [[ ! -d "$ENV_PATH" ]] && error "Environment '$envname' not found"
+    echo "source $ENV_PATH/activate"
+    ;;
+
+# ── List ──────────────────────────────────────────────────────────────────
+list)
+    echo "Nuba environments in $NUBA_ENVS_DIR:"
+    if [[ ! -d "$NUBA_ENVS_DIR" ]] || [[ -z "$(ls -A "$NUBA_ENVS_DIR" 2>/dev/null)" ]]; then
+        echo "  (none)"
+    else
+        for env_dir in "$NUBA_ENVS_DIR"/*/; do
+            env_name=$(basename "$env_dir")
+            active=""
+            [[ "${NUBA_ENV_NAME:-}" == "$env_name" ]] && active=" (active)"
+            echo "  • $env_name$active"
+        done
+    fi
+    ;;
+
+# ── Remove ────────────────────────────────────────────────────────────────
+remove)
+    [[ -z "$envname" ]] && error "Usage: nuba-env remove <name>"
+    ENV_PATH="$NUBA_ENVS_DIR/$envname"
+    [[ ! -d "$ENV_PATH" ]] && error "Environment '$envname' not found"
+    rm -rf "$ENV_PATH"
+    success "Environment '$envname' removed"
+    ;;
+
+# ── Run in env ────────────────────────────────────────────────────────────
+run)
+    [[ -z "$envname" ]] && error "Usage: nuba-env run <name> <file.nu>"
+    ENV_PATH="$NUBA_ENVS_DIR/$envname"
+    [[ ! -d "$ENV_PATH" ]] && error "Environment '$envname' not found"
+    shift 2
+    NUBA_ENV="$ENV_PATH" NUBA_PATH="$ENV_PATH/lib:$ENV_PATH/stdlib" \
+        "$ENV_PATH/bin/nuba" "$@"
+    ;;
+
+# ── Help ─────────────────────────────────────────────────────────────────
+*)
+    echo ""
+    echo "nuba-env — Nuba Environment Manager"
+    echo ""
+    echo "Usage:"
+    echo "  nuba-env create   <name>        Create a new environment"
+    echo "  nuba-env activate <name>        Print activation command"
+    echo "  nuba-env list                   List all environments"
+    echo "  nuba-env remove   <name>        Delete an environment"
+    echo "  nuba-env run      <name> <file> Run file in environment"
+    echo ""
+    echo "Quick start:"
+    echo "  nuba-env create myproject"
+    echo "  eval \"\$(nuba-env activate myproject)\""
+    echo "  nuba myfile.nu"
+    echo "  deactivate_nuba"
+    echo ""
+    ;;
+esac

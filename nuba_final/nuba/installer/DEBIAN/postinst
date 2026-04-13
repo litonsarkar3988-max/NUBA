@@ -1,0 +1,23 @@
+#!/bin/bash
+# postinst — run after nuba-lang .deb package is installed
+set -e
+
+# Register MIME type for .nu files
+if command -v xdg-mime &>/dev/null; then
+    xdg-mime install --novendor /usr/share/mime/packages/x-nuba.xml 2>/dev/null || true
+    update-mime-database /usr/share/mime 2>/dev/null || true
+fi
+
+# Install desktop entry
+if command -v xdg-desktop-menu &>/dev/null; then
+    xdg-desktop-menu install /usr/share/applications/nuba.desktop 2>/dev/null || true
+fi
+
+# Update desktop database
+if command -v update-desktop-database &>/dev/null; then
+    update-desktop-database /usr/share/applications 2>/dev/null || true
+fi
+
+echo "Nuba Language installed successfully!"
+echo "Run: nuba --version"
+echo "Or:  nuba myfile.nu"

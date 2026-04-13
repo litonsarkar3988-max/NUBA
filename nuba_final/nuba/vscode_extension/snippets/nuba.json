@@ -1,0 +1,218 @@
+{
+  "Print statement": {
+    "prefix": "print",
+    "body": ["print(${1:\"Hello, World!\"})"],
+    "description": "Print to console"
+  },
+  "Let variable": {
+    "prefix": "let",
+    "body": ["let ${1:name} = ${2:value}"],
+    "description": "Declare a mutable variable"
+  },
+  "Const variable": {
+    "prefix": "const",
+    "body": ["const ${1:NAME} = ${2:value}"],
+    "description": "Declare an immutable constant"
+  },
+  "Function": {
+    "prefix": "fun",
+    "body": [
+      "fun ${1:name}(${2:params}) {",
+      "\t${3:# body}",
+      "\treturn ${4:null}",
+      "}"
+    ],
+    "description": "Define a function"
+  },
+  "Lambda expression": {
+    "prefix": "lambda",
+    "body": ["fun(${1:x}) -> ${2:x * 2}"],
+    "description": "Lambda (expression)"
+  },
+  "Lambda block": {
+    "prefix": "lambdab",
+    "body": [
+      "fun(${1:x}) -> {",
+      "\t${2:# body}",
+      "\treturn ${3:null}",
+      "}"
+    ],
+    "description": "Lambda (block)"
+  },
+  "If statement": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condition} {",
+      "\t${2:# body}",
+      "}"
+    ],
+    "description": "If statement"
+  },
+  "If else": {
+    "prefix": "ife",
+    "body": [
+      "if ${1:condition} {",
+      "\t${2:# then}",
+      "} else {",
+      "\t${3:# else}",
+      "}"
+    ],
+    "description": "If-else statement"
+  },
+  "While loop": {
+    "prefix": "while",
+    "body": [
+      "while ${1:condition} {",
+      "\t${2:# body}",
+      "}"
+    ],
+    "description": "While loop"
+  },
+  "For loop": {
+    "prefix": "for",
+    "body": [
+      "for ${1:item} in ${2:collection} {",
+      "\t${3:# body}",
+      "}"
+    ],
+    "description": "For-in loop"
+  },
+  "For range": {
+    "prefix": "forr",
+    "body": [
+      "for ${1:i} in 0..${2:10} {",
+      "\t${3:# body}",
+      "}"
+    ],
+    "description": "For loop with range"
+  },
+  "Class": {
+    "prefix": "class",
+    "body": [
+      "class ${1:ClassName} {",
+      "\tfun init(self${2:, params}) {",
+      "\t\t${3:# initialize}",
+      "\t}",
+      "",
+      "\tfun ${4:method}(self) {",
+      "\t\t${5:# body}",
+      "\t}",
+      "}"
+    ],
+    "description": "Class definition"
+  },
+  "Class with inheritance": {
+    "prefix": "classi",
+    "body": [
+      "class ${1:Child}(${2:Parent}) {",
+      "\tfun init(self${3:, params}) {",
+      "\t\tsuper.init(${4:args})",
+      "\t\t${5:# extra init}",
+      "\t}",
+      "}"
+    ],
+    "description": "Class with inheritance"
+  },
+  "Try-catch": {
+    "prefix": "try",
+    "body": [
+      "try {",
+      "\t${1:# risky code}",
+      "} catch (${2:err}) {",
+      "\tprint(\"Error:\", ${2:err})",
+      "}"
+    ],
+    "description": "Try-catch block"
+  },
+  "Try-catch-finally": {
+    "prefix": "tryf",
+    "body": [
+      "try {",
+      "\t${1:# risky code}",
+      "} catch (${2:err}) {",
+      "\tprint(\"Error:\", ${2:err})",
+      "} finally {",
+      "\t${3:# cleanup}",
+      "}"
+    ],
+    "description": "Try-catch-finally block"
+  },
+  "Match statement": {
+    "prefix": "match",
+    "body": [
+      "match ${1:value} {",
+      "\tcase ${2:pattern1} -> {",
+      "\t\t${3:# body}",
+      "\t}",
+      "\tcase _ -> {",
+      "\t\t${4:# default}",
+      "\t}",
+      "}"
+    ],
+    "description": "Pattern match"
+  },
+  "Map": {
+    "prefix": "map",
+    "body": ["map(fun(${1:x}) -> ${2:x * 2}, ${3:list})"],
+    "description": "Map over a list"
+  },
+  "Filter": {
+    "prefix": "filter",
+    "body": ["filter(fun(${1:x}) -> ${2:x > 0}, ${3:list})"],
+    "description": "Filter a list"
+  },
+  "Reduce": {
+    "prefix": "reduce",
+    "body": ["reduce(fun(${1:a}, ${2:b}) -> ${3:a + b}, ${4:list})"],
+    "description": "Reduce a list"
+  },
+  "Import": {
+    "prefix": "import",
+    "body": ["import ${1:module}"],
+    "description": "Import module"
+  },
+  "From import": {
+    "prefix": "from",
+    "body": ["from ${1:module} import ${2:name}"],
+    "description": "From-import"
+  },
+  "Shebang": {
+    "prefix": "shebang",
+    "body": ["#!/usr/bin/env nuba", "# ${1:description}", ""],
+    "description": "Shebang line for executable .nu files"
+  },
+  "Main pattern": {
+    "prefix": "main",
+    "body": [
+      "#!/usr/bin/env nuba",
+      "# ${1:Script description}",
+      "",
+      "fun main() {",
+      "\t${2:# main code}",
+      "}",
+      "",
+      "main()"
+    ],
+    "description": "Main function pattern"
+  },
+  "Dict literal": {
+    "prefix": "dict",
+    "body": ["{\"${1:key}\": ${2:value}}"],
+    "description": "Dictionary literal"
+  },
+  "List literal": {
+    "prefix": "list",
+    "body": ["[${1:items}]"],
+    "description": "List literal"
+  },
+  "Format string": {
+    "prefix": "fmt",
+    "body": ["format(\"${1:{0}}\", ${2:args})"],
+    "description": "Format string"
+  },
+  "New instance": {
+    "prefix": "new",
+    "body": ["new ${1:ClassName}(${2:args})"],
+    "description": "Create new instance"
+  }
+}

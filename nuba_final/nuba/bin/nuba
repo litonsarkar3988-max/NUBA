@@ -1,0 +1,323 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+nuba  —  The Nuba Programming Language Interpreter
+Usage:  nuba [options] [file.nu] [args...]
+
+This is the main executable — works just like `python`:
+  nuba              → start interactive REPL
+  nuba file.nu      → run a .nu file
+  nuba -c "code"    → run inline code
+  nuba -m module    → run a stdlib module
+  nuba --version    → print version
+  nuba --help       → show help
+"""
+
+import sys
+import os
+
+# ── locate the Nuba package ────────────────────────────────────────────────
+_here = os.path.dirname(os.path.abspath(__file__))
+# When installed via pip: nuba package is alongside this script
+# When run from source:   nuba package is one dir up
+for _candidate in [_here, os.path.join(_here, '..'), os.path.join(_here, '..', 'lib')]:
+    _candidate = os.path.normpath(_candidate)
+    if os.path.isdir(os.path.join(_candidate, 'nuba')):
+        sys.path.insert(0, _candidate)
+        break
+
+# ── imports ────────────────────────────────────────────────────────────────
+try:
+    from nuba import __version__
+    from nuba.errors import NubaError, NubaLexError, NubaParseError, NubaRuntimeError
+    from nuba.runner import run_source, run_file
+    from nuba.repl   import run_repl
+except ImportError as e:
+    print(f"nuba: fatal: cannot import Nuba package: {e}", file=sys.stderr)
+    print(f"      Make sure Nuba is properly installed.", file=sys.stderr)
+    sys.exit(127)
+
+import argparse
+
+# ── Version / help strings ─────────────────────────────────────────────────
+HELP = f"""\
+Nuba Programming Language  v{__version__}
+
+Usage:
+  nuba                        Start interactive REPL
+  nuba <file.nu>              Run a Nuba source file
+  nuba -c <code>              Execute inline Nuba code
+  nuba -m <module>            Run a stdlib module as script
+  nuba --check <file.nu>      Check syntax without running
+  nuba --ast   <file.nu>      Dump abstract syntax tree
+  nuba --tokens <file.nu>     Dump token stream
+
+Options:
+  -c, --code CODE      Execute CODE string
+  -m, --module MOD     Run stdlib module MOD
+      --check          Syntax check only (no execution)
+      --ast            Print AST and exit
+      --tokens         Print tokens and exit
+      --no-color       Disable ANSI colors
+  -v, --version        Print version and exit
+  -h, --help           Show this help message
+
+Environment variables:
+  NUBA_PATH     Colon-separated list of extra import directories
+  NUBA_NOCOLOR  Set to 1 to disable colors
+  NUBA_DEBUG    Set to 1 for verbose error output
+
+File associations:
+  .nu files are Nuba source files (run with: nuba file.nu)
+
+Examples:
+  nuba                          # interactive REPL
+  nuba hello.nu                 # run hello.nu
+  nuba -c 'print("hi")'         # inline code
+  nuba --check myprogram.nu     # syntax check
+  nuba -m math                  # run stdlib/math.nu
+
+Homepage:  https://nuba-lang.org
+Docs:      https://docs.nuba-lang.org
+GitHub:    https://github.com/nuba-lang/nuba
+"""
+
+BANNER = f"""\
+Nuba {__version__} (interactive)
+Type 'help()' for help, 'exit()' to quit.
+"""
+
+
+def _colorize(text, code):
+    if os.environ.get('NUBA_NOCOLOR') or not sys.stderr.isatty():
+        return text
+    return f"\033[{code}m{text}\033[0m"
+
+
+def _error(msg):
+    print(_colorize(f"nuba: error: {msg}", '91'), file=sys.stderr)
+
+
+def _print_error(exc, filename='<nuba>', no_color=False):
+    """Pretty-print a Nuba error."""
+    kind = type(exc).__name__
+    msg  = str(exc)
+    if no_color:
+        print(f"{filename}: {kind}: {msg}", file=sys.stderr)
+    else:
+        print(_colorize(f"{msg}", '91'), file=sys.stderr)
+
+
+def _syntax_check(source, filename):
+    """Lex + parse only, return True if OK."""
+    from nuba.lexer  import Lexer
+    from nuba.parser import Parser
+    try:
+        tokens = Lexer(source, filename).tokenize()
+        Parser(tokens, filename).parse()
+        print(f"✓  {filename}: syntax OK")
+        return True
+    except (NubaLexError, NubaParseError) as e:
+        _error(str(e))
+        return False
+
+
+def _dump_tokens(source, filename):
+    from nuba.lexer import Lexer
+    tokens = Lexer(source, filename).tokenize()
+    for tok in tokens:
+        print(tok)
+
+
+def _dump_ast(source, filename):
+    from nuba.lexer  import Lexer
+    from nuba.parser import Parser
+    tokens = Lexer(source, filename).tokenize()
+    ast    = Parser(tokens, filename).parse()
+    _print_node(ast, 0)
+
+
+def _print_node(node, indent):
+    pad  = '  ' * indent
+    name = type(node).__name__
+    try:
+        fields = {k: v for k, v in vars(node).items() if k != 'line'}
+    except TypeError:
+        print(f"{pad}{node!r}")
+        return
+    children = {k: v for k, v in fields.items()
+                if hasattr(v, '__dict__') or isinstance(v, list)}
+    simple   = {k: v for k, v in fields.items() if k not in children}
+    parts    = ', '.join(f"{k}={v!r}" for k, v in simple.items())
+    print(f"{pad}{name}({parts})")
+    for k, v in children.items():
+        if isinstance(v, list):
+            print(f"{pad}  [{k}]:")
+            for item in v:
+                if hasattr(item, '__dict__'):
+                    _print_node(item, indent + 2)
+                else:
+                    print(f"{'  '*(indent+2)}{item!r}")
+        elif hasattr(v, '__dict__'):
+            print(f"{pad}  {k}:")
+            _print_node(v, indent + 2)
+
+
+def main(argv=None):
+    argv = argv if argv is not None else sys.argv[1:]
+
+    # ── fast path: no args → REPL ─────────────────────────────────────────
+    if not argv:
+        try:
+            run_repl()
+        except KeyboardInterrupt:
+            pass
+        sys.exit(0)
+
+    # ── custom minimal parser (avoids argparse eating .nu filenames) ───────
+    no_color  = False
+    check_only = False
+    dump_ast   = False
+    dump_tok   = False
+    inline_code = None
+    module_name = None
+    script_file = None
+    script_args = []
+
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+
+        if arg in ('-h', '--help'):
+            print(HELP)
+            sys.exit(0)
+
+        elif arg in ('-v', '--version'):
+            print(f"Nuba {__version__}")
+            sys.exit(0)
+
+        elif arg == '--no-color':
+            no_color = True
+            os.environ['NUBA_NOCOLOR'] = '1'
+
+        elif arg == '--check':
+            check_only = True
+
+        elif arg == '--ast':
+            dump_ast = True
+
+        elif arg == '--tokens':
+            dump_tok = True
+
+        elif arg in ('-c', '--code'):
+            i += 1
+            if i >= len(argv):
+                _error("'-c' requires a code argument")
+                sys.exit(1)
+            inline_code = argv[i]
+
+        elif arg in ('-m', '--module'):
+            i += 1
+            if i >= len(argv):
+                _error("'-m' requires a module name")
+                sys.exit(1)
+            module_name = argv[i]
+
+        elif not arg.startswith('-'):
+            script_file = arg
+            script_args = argv[i+1:]
+            break
+
+        else:
+            _error(f"unknown option: {arg!r}")
+            sys.exit(1)
+
+        i += 1
+
+    # ── set up NUBA_PATH ────────────────────────────────────────────────────
+    extra_paths = os.environ.get('NUBA_PATH', '').split(os.pathsep)
+    for p in extra_paths:
+        if p and p not in sys.path:
+            sys.path.insert(0, p)
+
+    # ── inline code (-c) ────────────────────────────────────────────────────
+    if inline_code is not None:
+        if check_only:
+            ok = _syntax_check(inline_code, '<code>')
+            sys.exit(0 if ok else 1)
+        if dump_ast:
+            _dump_ast(inline_code, '<code>')
+            sys.exit(0)
+        if dump_tok:
+            _dump_tokens(inline_code, '<code>')
+            sys.exit(0)
+        try:
+            run_source(inline_code, '<code>')
+        except NubaError as e:
+            _print_error(e, '<code>', no_color)
+            sys.exit(1)
+        except SystemExit as e:
+            sys.exit(e.code)
+        sys.exit(0)
+
+    # ── module mode (-m) ────────────────────────────────────────────────────
+    if module_name is not None:
+        # look in stdlib/
+        base     = os.path.normpath(os.path.join(_here, '..'))
+        mod_file = os.path.join(base, 'stdlib', module_name.replace('.', os.sep) + '.nu')
+        if not os.path.exists(mod_file):
+            _error(f"module not found: {module_name!r}")
+            sys.exit(1)
+        try:
+            run_file(mod_file)
+        except NubaError as e:
+            _print_error(e, module_name, no_color)
+            sys.exit(1)
+        sys.exit(0)
+
+    # ── file mode ────────────────────────────────────────────────────────────
+    if script_file is not None:
+        if not os.path.exists(script_file):
+            _error(f"file not found: {script_file!r}")
+            sys.exit(1)
+
+        with open(script_file, 'r', encoding='utf-8') as f:
+            source = f.read()
+
+        if check_only:
+            ok = _syntax_check(source, script_file)
+            sys.exit(0 if ok else 1)
+        if dump_ast:
+            _dump_ast(source, script_file)
+            sys.exit(0)
+        if dump_tok:
+            _dump_tokens(source, script_file)
+            sys.exit(0)
+
+        # expose script arguments as NUBA_ARGV
+        os.environ['NUBA_ARGV'] = ' '.join(script_args)
+
+        try:
+            run_file(script_file)
+        except NubaError as e:
+            _print_error(e, script_file, no_color)
+            if os.environ.get('NUBA_DEBUG'):
+                import traceback; traceback.print_exc()
+            sys.exit(1)
+        except SystemExit as e:
+            sys.exit(e.code)
+        except KeyboardInterrupt:
+            print("\nInterrupted", file=sys.stderr)
+            sys.exit(130)
+        sys.exit(0)
+
+    # ── no file and no -c/-m → REPL ─────────────────────────────────────────
+    try:
+        run_repl()
+    except KeyboardInterrupt:
+        pass
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()

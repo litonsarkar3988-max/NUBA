@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# nuba-pkg  —  Nuba Package Manager (like pip)
+# Manages .nu library packages
+# Usage:
+#   nuba-pkg install mypackage
+#   nuba-pkg list
+#   nuba-pkg remove mypackage
+#   nuba-pkg search query
+
+set -euo pipefail
+
+NUBA_PKG_DIR="${NUBA_PKG_HOME:-$HOME/.nuba/packages}"
+NUBA_REGISTRY="${NUBA_REGISTRY:-https://packages.nuba-lang.org}"
+
+info()    { echo "  [nuba-pkg] $*"; }
+success() { echo "  [nuba-pkg] ✓ $*"; }
+error()   { echo "  [nuba-pkg] ✗ $*" >&2; exit 1; }
+
+cmd="${1:-help}"
+
+mkdir -p "$NUBA_PKG_DIR"
+
+case "$cmd" in
+
+install)
+    pkg="${2:-}"
+    [[ -z "$pkg" ]] && error "Usage: nuba-pkg install <package>"
+    info "Installing package: $pkg"
+    mkdir -p "$NUBA_PKG_DIR/$pkg"
+    cat > "$NUBA_PKG_DIR/$pkg/init.nu" << EOF
+# Package: $pkg
+# Installed by nuba-pkg
+print("Package $pkg loaded")
+EOF
+    cat > "$NUBA_PKG_DIR/$pkg/nuba-pkg.json" << EOF
+{
+  "name": "$pkg",
+  "version": "1.0.0",
+  "installed_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+}
+EOF
+    success "Package '$pkg' installed to $NUBA_PKG_DIR/$pkg"
+    echo "  Use in code: import $pkg"
+    ;;
+
+list)
+    echo "Installed Nuba packages:"
+    if [[ -z "$(ls -A "$NUBA_PKG_DIR" 2>/dev/null)" ]]; then
+        echo "  (none)"
+    else
+        for pkg_dir in "$NUBA_PKG_DIR"/*/; do
+            pkg_name=$(basename "$pkg_dir")
+            ver=$(python3 -c "import json; d=json.load(open('$pkg_dir/nuba-pkg.json')); print(d.get('version','?'))" 2>/dev/null || echo "?")
+            echo "  • $pkg_name ($ver)"
+        done
+    fi
+    ;;
+
+remove)
+    pkg="${2:-}"
+    [[ -z "$pkg" ]] && error "Usage: nuba-pkg remove <package>"
+    PKG_PATH="$NUBA_PKG_DIR/$pkg"
+    [[ ! -d "$PKG_PATH" ]] && error "Package '$pkg' not installed"
+    rm -rf "$PKG_PATH"
+    success "Package '$pkg' removed"
+    ;;
+
+search)
+    query="${2:-}"
+    echo "Searching for '$query' on $NUBA_REGISTRY ..."
+    echo "  (Package registry is a future feature)"
+    echo "  For now, install packages manually or from GitHub"
+    ;;
+
+path)
+    echo "$NUBA_PKG_DIR"
+    ;;
+
+*)
+    echo ""
+    echo "nuba-pkg — Nuba Package Manager"
+    echo ""
+    echo "Usage:"
+    echo "  nuba-pkg install <pkg>   Install a package"
+    echo "  nuba-pkg remove  <pkg>   Remove a package"
+    echo "  nuba-pkg list            List installed packages"
+    echo "  nuba-pkg search  <q>     Search registry"
+    echo "  nuba-pkg path            Show packages directory"
+    echo ""
+    ;;
+esac

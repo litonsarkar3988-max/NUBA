@@ -1,0 +1,88 @@
+Windows Registry Editor Version 5.00
+
+; ════════════════════════════════════════════════════════════════════════
+;  Nuba Programming Language — Windows File Association
+;  File: nuba_association.reg
+;
+;  This file registers:
+;    • .nu  →  Nuba Source File
+;    • Right-click context menus:
+;        "Run with Nuba"
+;        "Check Syntax"
+;        "Open REPL"
+;    • Opens in default text editor for editing
+;
+;  Import: double-click this file OR run:
+;    reg import nuba_association.reg
+; ════════════════════════════════════════════════════════════════════════
+
+; ── .nu extension mapping ────────────────────────────────────────────────
+[HKEY_CURRENT_USER\Software\Classes\.nu]
+@="NubaSourceFile"
+"Content Type"="text/x-nuba"
+"PerceivedType"="text"
+
+[HKEY_CURRENT_USER\Software\Classes\.nu\OpenWithProgids]
+"NubaSourceFile"=""
+
+; ── NubaSourceFile type definition ───────────────────────────────────────
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile]
+@="Nuba Source File"
+
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\DefaultIcon]
+@="%LOCALAPPDATA%\\Nuba\\bin\\nuba_icon.ico,0"
+
+; ── Open (default double-click action) ───────────────────────────────────
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell]
+@="open"
+
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\open]
+@="&Run with Nuba"
+"Icon"="%LOCALAPPDATA%\\Nuba\\bin\\nuba_icon.ico"
+
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\open\command]
+@="cmd.exe /k \"%LOCALAPPDATA%\\Nuba\\bin\\nuba.cmd\" \"%1\" %*"
+
+; ── "Run with Nuba" (explicit context menu) ───────────────────────────────
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\RunWithNuba]
+@="&Run with Nuba"
+"Icon"="%LOCALAPPDATA%\\Nuba\\bin\\nuba_icon.ico"
+
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\RunWithNuba\command]
+@="cmd.exe /k \"%LOCALAPPDATA%\\Nuba\\bin\\nuba.cmd\" \"%1\" && pause"
+
+; ── "Run Silently" (no window pause) ─────────────────────────────────────
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\RunSilent]
+@="Run &Silently"
+
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\RunSilent\command]
+@="\"%LOCALAPPDATA%\\Nuba\\bin\\nuba.cmd\" \"%1\" %*"
+
+; ── "Check Syntax" ────────────────────────────────────────────────────────
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\CheckSyntax]
+@="&Check Syntax"
+
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\CheckSyntax\command]
+@="cmd.exe /k \"%LOCALAPPDATA%\\Nuba\\bin\\nuba.cmd\" --check \"%1\" && pause"
+
+; ── "Open REPL" ───────────────────────────────────────────────────────────
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\OpenREPL]
+@="Open &REPL"
+
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\OpenREPL\command]
+@="cmd.exe /k \"%LOCALAPPDATA%\\Nuba\\bin\\nuba.cmd\""
+
+; ── "Edit" ────────────────────────────────────────────────────────────────
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\edit]
+@="&Edit"
+"Icon"="notepad.exe"
+
+[HKEY_CURRENT_USER\Software\Classes\NubaSourceFile\shell\edit\command]
+@="notepad.exe \"%1\""
+
+; ── MIME type registration ────────────────────────────────────────────────
+[HKEY_CURRENT_USER\Software\Classes\MIME\Database\Content Type\text/x-nuba]
+"Extension"=".nu"
+
+; ── Notify Explorer to refresh ────────────────────────────────────────────
+; (This happens automatically on import, but good to document)

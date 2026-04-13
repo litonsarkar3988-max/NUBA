@@ -1,0 +1,101 @@
+# Testing: Soft Assertions
+
+print("=== Soft Assertions ===")
+
+# Test framework simulation
+
+class TestSuite {
+    fun init(self, name) {
+        self.name    = name
+        self.tests   = []
+        self.passed  = 0
+        self.failed  = 0
+        self.skipped = 0
+        self.start_time = time()
+    }
+
+    fun test(self, test_name, fn) {
+        push(self.tests, {"name":test_name,"fn":fn,"status":"pending"})
+        return self
+    }
+
+    fun skip(self, test_name, reason) {
+        push(self.tests, {"name":test_name,"fn":null,"status":"skipped","reason":reason})
+        self.skipped += 1
+        return self
+    }
+
+    fun run_all(self) {
+        print(format("\nRunning: {0} ({1} tests)", self.name, len(self.tests)))
+        for t in self.tests {
+            if t["status"] == "skipped" {
+                print(format("  ⊘ {0} [SKIPPED: {1}]", t["name"], t["reason"] if has(t,"reason") else ""))
+                continue
+            }
+            try {
+                t["fn"]()
+                t["status"] = "passed"
+                self.passed += 1
+                print("  ✓", t["name"])
+            } catch (err) {
+                t["status"] = "failed"
+                t["error"]  = err
+                self.failed += 1
+                print("  ✗", t["name"], "->", err)
+            }
+        }
+        self.report()
+    }
+
+    fun report(self) {
+        let duration = round(time() - self.start_time, 3)
+        let total = self.passed + self.failed + self.skipped
+        print(format("\nResults: {0} passed, {1} failed, {2} skipped ({3}s)",
+            self.passed, self.failed, self.skipped, duration))
+        if self.failed > 0 {
+            print("FAILED!")
+        } else {
+            print("All tests passed!")
+        }
+    }
+}
+
+fun assert_eq(actual, expected) {
+    if actual != expected {
+        throw format("Expected {0} but got {1}", expected, actual)
+    }
+}
+
+fun assert_true(val)  { if not val  { throw "Expected true but got false" } }
+fun assert_false(val) { if val { throw "Expected false but got true" } }
+fun assert_null(val)  { if val != null { throw "Expected null" } }
+fun assert_not_null(val) { if val == null { throw "Expected non-null" } }
+fun assert_in_range(val, lo, hi) {
+    if val < lo or val > hi {
+        throw format("{0} not in range [{1}, {2}]", val, lo, hi)
+    }
+}
+
+# Demo test suite for Soft Assertions
+let suite = new TestSuite("Soft Assertions Tests")
+
+suite.test("addition works",        fun() -> assert_eq(1+1, 2))
+suite.test("string concat works",   fun() -> assert_eq("a"+"b", "ab"))
+suite.test("list length works",     fun() -> assert_eq(len([1,2,3]), 3))
+suite.test("boolean logic works",   fun() -> assert_true(true and not false))
+suite.test("comparison works",      fun() -> assert_true(5 > 3))
+suite.test("null check works",      fun() -> assert_null(null))
+suite.test("not null check",        fun() -> assert_not_null(42))
+suite.test("range check",           fun() -> assert_in_range(5, 1, 10))
+suite.test("float comparison",      fun() -> assert_true(abs(3.14 - PI) < 0.01))
+suite.test("list operations work",  fun() -> {
+    let lst = [1,2,3]
+    push(lst, 4)
+    assert_eq(len(lst), 4)
+    assert_eq(pop(lst), 4)
+    assert_eq(len(lst), 3)
+})
+suite.skip("external_api_call", "requires network")
+suite.skip("db_integration",    "requires database")
+
+suite.run_all()

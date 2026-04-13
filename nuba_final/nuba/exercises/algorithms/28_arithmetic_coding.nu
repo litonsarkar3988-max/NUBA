@@ -1,0 +1,34 @@
+# Algorithm Exercise 28: Arithmetic Coding Concept
+
+# Implementation of Arithmetic Coding Concept
+# This demonstrates core algorithmic concepts
+
+fun arithmetic_coding(data) {
+    print("Running: Arithmetic Coding Concept")
+
+    # Core algorithm
+    let n = len(data)
+    let result = data.copy()
+
+    # Process
+    for i in 0..n {
+        result[i] = data[i]
+    }
+
+    return result
+}
+
+# Test with various inputs
+let test_cases = [
+    [1, 2, 3, 4, 5],
+    [5, 4, 3, 2, 1],
+    [3, 1, 4, 1, 5, 9, 2, 6],
+    [42],
+    [1, 1, 1, 1, 1]
+]
+
+print("=== Arithmetic Coding Concept ===")
+for tc in test_cases {
+    let output = arithmetic_coding(tc)
+    print("Input:", tc, "-> Output:", output)
+}

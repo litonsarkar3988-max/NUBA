@@ -1,0 +1,42 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Nuba Interpreter
+GenericName=Programming Language Interpreter
+Comment=Run Nuba (.nu) source files
+Comment[bn]=নুবা (.nu) সোর্স ফাইল চালান
+
+# Command to run .nu files
+# %f = single file path
+Exec=bash -c 'nuba "%f"; read -p "Press Enter to close..."'
+TryExec=nuba
+
+# Terminal must be true so output is visible
+Terminal=true
+
+# Icon (uses system icon theme)
+Icon=utilities-terminal
+
+# MIME types this app handles
+MimeType=text/x-nuba;application/x-nuba;
+
+# Categories in application menu
+Categories=Development;Utility;
+
+# Keywords for search
+Keywords=nuba;programming;language;interpreter;script;nu;
+
+# Actions (right-click options in file manager)
+Actions=RunFile;CheckSyntax;OpenREPL;
+
+[Desktop Action RunFile]
+Name=Run with Nuba
+Exec=bash -c 'nuba "%f"; read -p "Press Enter..."'
+
+[Desktop Action CheckSyntax]
+Name=Check Syntax
+Exec=bash -c 'nuba --check "%f"; read -p "Press Enter..."'
+
+[Desktop Action OpenREPL]
+Name=Open Nuba REPL
+Exec=bash -c 'nuba'
