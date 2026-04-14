@@ -5,9 +5,9 @@
 
 echo "[*] Starting NUBA Installation..."
 
-# ১. এনভায়রনমেন্ট ডিটেকশন
+# ১. এনভায়রনমেন্ট ডিটেকশন (Termux vs Linux)
 if [ -d "$PREFIX/bin" ]; then
-    # এটি টার্মাক্স (Termux)
+    # এটি টার্মিনাক্স (Termux)
     BIN_DIR="$PREFIX/bin"
     BASE_DIR="$HOME/.nuba"
     SUDO=""
@@ -20,18 +20,18 @@ else
     echo "[!] Linux environment detected."
 fi
 
-# ২. ডিরেক্টরি তৈরি করা
+# ২. ডিরেক্টরি তৈরি করা (sudo ছাড়াই যদি টার্মিনাক্স হয়)
 $SUDO mkdir -p $BASE_DIR/stdlib
 $SUDO mkdir -p $BASE_DIR/packages
 $SUDO mkdir -p $BASE_DIR/docs
 $SUDO mkdir -p $BASE_DIR/tests
 
-# ৩. মেইন nuba.py ডাউনলোড এবং কমান্ড সেটআপ
+# ৩. মেইন nuba.py ডাউনলোড
 echo "[*] Installing NUBA Core Engine..."
 $SUDO curl -sSL "https://raw.githubusercontent.com/litonsarkar3988-max/NUBA/main/nuba.py" -o $BIN_DIR/nuba
 $SUDO chmod +x $BIN_DIR/nuba
 
-# ৪. স্ট্যান্ডার্ড লাইব্রেরি (Standard Libraries)
+# ৪. স্ট্যান্ডার্ড লাইব্রেরি ডাউনলোড
 echo "[*] Syncing Standard Libraries..."
 STD_LIBS=("math.nu" "string.nu" "io.nu" "system.nu")
 for lib in "${STD_LIBS[@]}"; do
@@ -39,11 +39,10 @@ for lib in "${STD_LIBS[@]}"; do
 done
 
 # ৫. ডকুমেন্টেশন এবং টেস্ট ফাইল
-echo "[*] Fetching Docs and Tests..."
 $SUDO curl -sSL "https://raw.githubusercontent.com/litonsarkar3988-max/NUBA/main/docs/tutorial.txt" -o "$BASE_DIR/docs/tutorial.txt"
 $SUDO curl -sSL "https://raw.githubusercontent.com/litonsarkar3988-max/NUBA/main/tests/test_core.nu" -o "$BASE_DIR/tests/test_core.nu"
 
-# ৬. পারমিশন সেটআপ
+# ৬. পারমিশন নিশ্চিত করা
 $SUDO chmod -R 755 $BASE_DIR
 
 echo "------------------------------------------------"
