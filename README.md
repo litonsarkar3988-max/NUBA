@@ -2,7 +2,7 @@
 
 ![NUBA Logo](NUBA.JPG)
 
-**NUBA** is a modern, high-performance, and user-friendly programming language ecosystem. It provides a complete suite for developers, integrating the Interpreter, Package Manager (**nip**), and Publisher (**nin**) into a single, unified command-line interface.
+**NUBA** is a modern, high-performance, and user-friendly programming language ecosystem. It provides a complete suite for developers, integrating the Interpreter, Package Manager (**nuba install**), and Publisher (**nuba publish**) into a single, unified command-line interface.
 
 ---
 
